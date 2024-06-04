@@ -63,7 +63,7 @@ if __name__ == '__main__':
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean = RGB_MEAN,
-                             std = RGB_STD),
+                            std = RGB_STD),
     ])
 
     dataset_train = datasets.ImageFolder(os.path.join(DATA_ROOT, 'imgs'), train_transform)
@@ -85,15 +85,15 @@ if __name__ == '__main__':
 
 
     #======= model & loss & optimizer =======#
-    BACKBONE_DICT = {'ResNet_50': ResNet_50(INPUT_SIZE), 
-                     'ResNet_101': ResNet_101(INPUT_SIZE), 
-                     'ResNet_152': ResNet_152(INPUT_SIZE),
-                     'IR_50': IR_50(INPUT_SIZE), 
-                     'IR_101': IR_101(INPUT_SIZE), 
-                     'IR_152': IR_152(INPUT_SIZE),
-                     'IR_SE_50': IR_SE_50(INPUT_SIZE), 
-                     'IR_SE_101': IR_SE_101(INPUT_SIZE), 
-                     'IR_SE_152': IR_SE_152(INPUT_SIZE)}
+    BACKBONE_DICT = {'ResNet_50': ResNet_50(INPUT_SIZE),
+                    'ResNet_101': ResNet_101(INPUT_SIZE),
+                    'ResNet_152': ResNet_152(INPUT_SIZE),
+                    'IR_50': IR_50(INPUT_SIZE),
+                    'IR_101': IR_101(INPUT_SIZE),
+                    'IR_152': IR_152(INPUT_SIZE),
+                    'IR_SE_50': IR_SE_50(INPUT_SIZE),
+                    'IR_SE_101': IR_SE_101(INPUT_SIZE),
+                    'IR_SE_152': IR_SE_152(INPUT_SIZE)}
     BACKBONE = BACKBONE_DICT[BACKBONE_NAME]
     print("=" * 60)
     print(BACKBONE)
@@ -101,28 +101,18 @@ if __name__ == '__main__':
     print("=" * 60)
 
     HEAD_DICT = {'ArcFace': ArcFace(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID),
-                 'CosFace': CosFace(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID),
-                 'SphereFace': SphereFace(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID),
-                 'Am_softmax': Am_softmax(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID)}
+                'CosFace': CosFace(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID),
+                'SphereFace': SphereFace(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID),
+                'Am_softmax': Am_softmax(in_features = EMBEDDING_SIZE, out_features = NUM_CLASS, device_id = GPU_ID)}
     HEAD = HEAD_DICT[HEAD_NAME]
     print("=" * 60)
     print(HEAD)
     print("{} Head Generated".format(HEAD_NAME))
     print("=" * 60)
 
-    LOSS_DICT = {'Focal': FocalLoss(), 
-                 'Softmax': nn.CrossEntropyLoss()
-                 'AdaCos' : AdaCos(),
-                 'AdaM_Softmax': AdaM_Softmax() ,
-                 'ArcFace' : ArcFace() ,
-                 'ArcNegFace': ArcNegFace(),
-                 'CircleLoss': Circleloss(),
-                 'CurricularFace': CurricularFace(),
-                 'MagFace' :  MagFace(),
-                 'NPCFace' :  MV_Softmax.py(),
-                 'SST_Prototype' SST_Prototype(),
-                 
-                 }
+    LOSS_DICT = {'Focal': FocalLoss(),
+                'Softmax': nn.CrossEntropyLoss(),
+                }
     LOSS = LOSS_DICT[LOSS_NAME]
     print("=" * 60)
     print(LOSS)
@@ -170,7 +160,7 @@ if __name__ == '__main__':
     batch = 0  # batch index
 
     for epoch in range(NUM_EPOCH): # start training process
-        
+
         if epoch == STAGES[0]: # adjust LR for each training stage after warm up, you can also choose to adjust LR manually (with slight modification) once plaueau observed
             schedule_lr(OPTIMIZER)
         if epoch == STAGES[1]:
@@ -207,14 +197,14 @@ if __name__ == '__main__':
             OPTIMIZER.zero_grad()
             loss.backward()
             OPTIMIZER.step()
-            
+
             # dispaly training loss & acc every DISP_FREQ
             if ((batch + 1) % DISP_FREQ == 0) and batch != 0:
                 print("=" * 60)
                 print('Epoch {}/{} Batch {}/{}\t'
-                      'Training Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Training Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                      'Training Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+                    'Training Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                    'Training Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                    'Training Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                     epoch + 1, NUM_EPOCH, batch + 1, len(train_loader) * NUM_EPOCH, loss = losses, top1 = top1, top5 = top5))
                 print("=" * 60)
 
@@ -227,9 +217,9 @@ if __name__ == '__main__':
         writer.add_scalar("Training_Accuracy", epoch_acc, epoch + 1)
         print("=" * 60)
         print('Epoch: {}/{}\t'
-              'Training Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-              'Training Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-              'Training Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
+            'Training Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+            'Training Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+            'Training Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
             epoch + 1, NUM_EPOCH, loss = losses, top1 = top1, top5 = top5))
         print("=" * 60)
 
