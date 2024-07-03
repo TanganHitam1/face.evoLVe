@@ -2,3 +2,6 @@
 test
 config_f.py
 train_f.py
+/log
+*.pth
+__pycache__/
