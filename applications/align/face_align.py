@@ -9,8 +9,8 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "face alignment")
-    parser.add_argument("-source_root", "--source_root", help = "specify your source dir", default = "./data/test", type = str)
-    parser.add_argument("-dest_root", "--dest_root", help = "specify your destination dir", default = "./data/test_Aligned", type = str)
+    parser.add_argument("-source_root", "--source_root", help = "specify your source dir", default = "E:/RetinaFace/Dataset loss/idol/", type = str)
+    parser.add_argument("-dest_root", "--dest_root", help = "specify your destination dir", default = "E:/RetinaFace/Dataset loss/idol/", type = str)
     parser.add_argument("-crop_size", "--crop_size", help = "specify size of aligned faces, align and crop with padding", default = 112, type = int)
     args = parser.parse_args()
 
@@ -36,8 +36,9 @@ if __name__ == '__main__':
             img = Image.open(os.path.join(source_root, subfolder, image_name))
             try: # Handle exception
                 _, landmarks = detect_faces(img)
-            except Exception:
+            except Exception as e:
                 print("{} is discarded due to exception!".format(os.path.join(source_root, subfolder, image_name)))
+                print("Exception: {}".format(e))
                 continue
             if len(landmarks) == 0: # If the landmarks cannot be detected, the img will be discarded
                 print("{} is discarded due to non-detected landmarks!".format(os.path.join(source_root, subfolder, image_name)))
