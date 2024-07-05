@@ -3,14 +3,18 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+from torch.utils import data
+import numpy as np
+import matplotlib.pyplot as plt
 
 from config import configurations
 from backbone.model_resnet import ResNet_50, ResNet_101, ResNet_152
 from backbone.model_irse import IR_50, IR_101, IR_152, IR_SE_50, IR_SE_101, IR_SE_152
 from head.metrics import ArcFace, CosFace, SphereFace, Am_softmax
 from loss.focal import FocalLoss
+from models.retinaface import RetinaFace
 from util.utils import make_weights_for_balanced_classes, separate_irse_bn_paras, separate_resnet_bn_paras, warm_up_lr, schedule_lr, perform_val, get_time, buffer_val, AverageMeter, accuracy
-from data import dataset
+# from data import dataset
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import os
@@ -25,7 +29,7 @@ if __name__ == '__main__':
     torch.manual_seed(SEED)
 
     DATA_ROOT = cfg['DATA_ROOT'] # the parent root where your train/val/test data are stored
-    DATA_LIST_FILE = cfg['DATA_LIST_FILE']
+    # DATA_LIST_FILE = cfg['DATA_LIST_FILE']
     MODEL_ROOT = cfg['MODEL_ROOT'] # the root to buffer your checkpoints
     LOG_ROOT = cfg['LOG_ROOT'] # the root to log your train/val status
     BACKBONE_RESUME_ROOT = cfg['BACKBONE_RESUME_ROOT'] # the root to resume training from a saved checkpoint
@@ -57,7 +61,7 @@ if __name__ == '__main__':
     print(cfg)
     print("=" * 60)
 
-    writer = SummaryWriter(LOG_ROOT) # writer for buffering intermedium results
+    # writer = SummaryWriter(LOG_ROOT) # writer for buffering intermedium results
 
     train_transform = transforms.Compose([ # refer to https://pytorch.org/docs/stable/torchvision/transforms.html for more build-in online data augmentation
         transforms.Resize([int(128 * INPUT_SIZE[0] / 112), int(128 * INPUT_SIZE[0] / 112)]), # smaller side resized
@@ -68,21 +72,34 @@ if __name__ == '__main__':
                             std = RGB_STD),
     ])
 
-    # dataset_train = datasets.ImageFolder(os.path.join(DATA_ROOT, 'imgs'), train_transform)
+    dataset_train = datasets.ImageFolder(os.path.join(DATA_ROOT, 'casia-maxpy-clean'), train_transform)
     # dataset_train = dataset.Dataset(root = DATA_ROOT, data_list_file = DATA_LIST_FILE, phase = 'train', input_shape = INPUT_SIZE)
-    dataset_train = datasets.L
+    # dataset_train = datasets.L
     # datasets.
     # create a weighted random sampler to process imbalanced data
-    weights = make_weights_for_balanced_classes(dataset_train, dataset_train.classes)
+    print("=" * 60)
+    print("Training Dataset Generated")
+    print("=" * 60)
+    weights = make_weights_for_balanced_classes(dataset_train, len(dataset_train.classes) if type(dataset_train.classes) == list else dataset_train.classes)
+    np.savetxt("weights.txt", weights)
     weights = torch.DoubleTensor(weights)
-    sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights))
+    print("=" * 60)
+    print("Weights Generated")
+    print("=" * 60)
+    sampler = data.sampler.WeightedRandomSampler(weights, len(weights))
 
-    train_loader = torch.utils.data.DataLoader(
+    print("=" * 60)
+    print("Weighted Random Sampler Generated")
+    print("=" * 60)
+    train_loader = data.DataLoader(
         dataset_train, batch_size = BATCH_SIZE, sampler = sampler, pin_memory = PIN_MEMORY,
         num_workers = NUM_WORKERS, drop_last = DROP_LAST
     )
+    print("=" * 60)
+    print("Training DataLoader Generated")
+    print("=" * 60)
 
-    NUM_CLASS = train_loader.dataset.classes
+    NUM_CLASS = len(train_loader.dataset.classes) if type(train_loader.dataset.classes) == list else train_loader.dataset.classes
     print("Number of Training Classes: {}".format(NUM_CLASS))
 
     # lfw, cfp_ff, cfp_fp, agedb, calfw, cplfw, vgg2_fp, lfw_issame, cfp_ff_issame, cfp_fp_issame, agedb_issame, calfw_issame, cplfw_issame, vgg2_fp_issame = get_val_data(DATA_ROOT)
@@ -97,7 +114,8 @@ if __name__ == '__main__':
                     'IR_152': IR_152(INPUT_SIZE),
                     'IR_SE_50': IR_SE_50(INPUT_SIZE),
                     'IR_SE_101': IR_SE_101(INPUT_SIZE),
-                    'IR_SE_152': IR_SE_152(INPUT_SIZE)}
+                    'IR_SE_152': IR_SE_152(INPUT_SIZE),
+                    'RetinaFace': RetinaFace(cfg = cfg, phase = 'train')}
     BACKBONE = BACKBONE_DICT[BACKBONE_NAME]
     print("=" * 60)
     # print(BACKBONE)
@@ -162,6 +180,17 @@ if __name__ == '__main__':
     NUM_EPOCH_WARM_UP = NUM_EPOCH // 25  # use the first 1/25 epochs to warm up
     NUM_BATCH_WARM_UP = len(train_loader) * NUM_EPOCH_WARM_UP  # use the first 1/25 epochs to warm up
     batch = 0  # batch index
+    
+    best_acc = 0.0  # initialize with a small value
+    acc_list = []  # buffer for accuracy values
+    loss_list = []  # buffer for loss values
+    best_epoch = 0  # best epoch index
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Accuracy', color = 'red')
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Loss', color = 'blue')
 
     for epoch in range(NUM_EPOCH): # start training process
 
@@ -179,7 +208,7 @@ if __name__ == '__main__':
         top1 = AverageMeter()
         top5 = AverageMeter()
 
-        for inputs, labels in tqdm(iter(train_loader)):
+        for inputs, labels in tqdm(iter(train_loader), leave=False, total=len(train_loader)): # start to iterate over data_loader (batch training steps
 
             if (epoch + 1 <= NUM_EPOCH_WARM_UP) and (batch + 1 <= NUM_BATCH_WARM_UP): # adjust LR for each training batch during warm up
                 warm_up_lr(batch + 1, NUM_BATCH_WARM_UP, LR, OPTIMIZER)
@@ -187,7 +216,10 @@ if __name__ == '__main__':
             # compute output
             inputs = inputs.to(DEVICE)
             labels = labels.to(DEVICE).long()
-            features = BACKBONE(inputs)
+            if BACKBONE_NAME == 'RetinaFace':
+                _, features = BACKBONE(inputs)
+            else:
+                features = BACKBONE(inputs)
             outputs = HEAD(features, labels)
             loss = LOSS(outputs, labels)
 
@@ -217,8 +249,17 @@ if __name__ == '__main__':
         # training statistics per epoch (buffer for visualization)
         epoch_loss = losses.avg
         epoch_acc = top1.avg
-        writer.add_scalar("Training_Loss", epoch_loss, epoch + 1)
-        writer.add_scalar("Training_Accuracy", epoch_acc, epoch + 1)
+        acc_list.append(epoch_acc)
+        loss_list.append(epoch_loss)
+
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Accuracy', color = 'red')
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('Loss', color = 'blue')
+
+        # writer.add_scalar("Training_Loss", epoch_loss, epoch + 1)
+        # writer.add_scalar("Training_Accuracy", epoch_acc, epoch + 1)
         print("=" * 60)
         print('Epoch: {}/{}\t'
             'Training Loss {loss.val:.4f} ({loss.avg:.4f})\t'
@@ -249,10 +290,13 @@ if __name__ == '__main__':
         print("Epoch {}/{}".format(epoch + 1, NUM_EPOCH))
         print("=" * 60)
 
-        # save checkpoints per epoch
-        if MULTI_GPU:
-            torch.save(BACKBONE.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, batch, get_time())))
-            torch.save(HEAD.state_dict(), os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, batch, get_time())))
-        else:
-            torch.save(BACKBONE.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, batch, get_time())))
-            torch.save(HEAD.state_dict(), os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, batch, get_time())))
+        if epoch_acc > best_acc: # save best model
+            best_acc = epoch_acc
+            # if MULTI_GPU:
+            #     torch.save(BACKBONE.module.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, batch, get_time())))
+            #     torch.save(HEAD.state_dict(), os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, batch, get_time())))
+            # else:
+            #     torch.save(BACKBONE.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(BACKBONE_NAME, epoch + 1, batch, get_time())))
+            #     torch.save(HEAD.state_dict(), os.path.join(MODEL_ROOT, "Head_{}_Epoch_{}_Batch_{}_Time_{}_checkpoint.pth".format(HEAD_NAME, epoch + 1, batch, get_time())))
+            torch.save(BACKBONE.state_dict(), os.path.join(MODEL_ROOT, "Backbone_{}_Best.pth".format(BACKBONE_NAME)))
+            torch.save(HEAD.state_dict(), os.path.join(MODEL_ROOT, "Head_{}_Best.pth".format(HEAD_NAME)))
