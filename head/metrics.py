@@ -87,6 +87,7 @@ class ArcFace(nn.Module):
         self.weight = Parameter(torch.FloatTensor(out_features, in_features))
         nn.init.xavier_uniform_(self.weight)
       
+        # self.linear = nn.Linear(1024, 512)
         self.easy_margin = easy_margin
         self.cos_m = math.cos(m)
         self.sin_m = math.sin(m)
@@ -95,6 +96,16 @@ class ArcFace(nn.Module):
 
     def forward(self, input, label):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
+        # flatten = nn.Flatten()
+        # if type(input) == list:
+        #     for i, inp in enumerate(input):
+        #         input[i] = flatten(inp)
+        #     input = torch.cat((input[0], input[1], input[2]), dim=1)
+        # else:
+        #     input = flatten(input)
+        # linear = nn.Linear(input.size(1), self.in_features).to(input.device)
+        # input = linear(input)
+        # input = F.normalize(input)
         if self.device_id == None:
             cosine = F.linear(F.normalize(input), F.normalize(self.weight))
         else:
@@ -112,7 +123,9 @@ class ArcFace(nn.Module):
         if self.easy_margin:
             phi = torch.where(cosine > 0, phi, cosine)
         else:
-            phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+            phi = torch.where(cosine > self.th,
+                            phi,
+                            cosine - self.mm)
         # --------------------------- convert label to one-hot ---------------------------
         one_hot = torch.zeros(cosine.size())
         if self.device_id != None:

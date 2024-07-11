@@ -9,8 +9,8 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "face alignment")
-    parser.add_argument("-source_root", "--source_root", help = "specify your source dir", default = "E:/RetinaFace/Dataset loss/idol/", type = str)
-    parser.add_argument("-dest_root", "--dest_root", help = "specify your destination dir", default = "E:/RetinaFace/Dataset loss/idol/", type = str)
+    parser.add_argument("-source_root", "--source_root", help = "specify your source dir", default = "./data/Datasets/casia-maxpy-clean", type = str)
+    parser.add_argument("-dest_root", "--dest_root", help = "specify your destination dir", default = "./data/Datasets/casia-align-112/", type = str)
     parser.add_argument("-crop_size", "--crop_size", help = "specify size of aligned faces, align and crop with padding", default = 112, type = int)
     args = parser.parse_args()
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
         if not os.path.isdir(os.path.join(dest_root, subfolder)):
             os.mkdir(os.path.join(dest_root, subfolder))
         for image_name in os.listdir(os.path.join(source_root, subfolder)):
-            print("Processing\t{}".format(os.path.join(source_root, subfolder, image_name)))
+            # print("Processing\t{}".format(os.path.join(source_root, subfolder, image_name)))
             img = Image.open(os.path.join(source_root, subfolder, image_name))
             try: # Handle exception
                 _, landmarks = detect_faces(img)

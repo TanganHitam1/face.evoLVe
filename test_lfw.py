@@ -41,7 +41,7 @@ NUM_WORKERS = cfg['NUM_WORKERS']
 
 writer = SummaryWriter(LOG_ROOT)
 
-STATE_DICT = torch.load("./model/Backbone_ResNet_50_Best.pth")
+STATE_DICT = torch.load("./model/metricArcFace_lossFocal_lr0.01_batch256_epoch125_optSGD/Backbone_ResNet_50_Best.pth")
 
 BACKBONE = ResNet_50(INPUT_SIZE)
 BACKBONE.load_state_dict(STATE_DICT)
@@ -51,4 +51,4 @@ lfw, lfw_issame = get_val_data(DATA_ROOT)
 
 accuracy_lfw, best_threshold_lfw, roc_curve_lfw = perform_val(MULTI_GPU, DEVICE, EMBEDDING_SIZE, BATCH_SIZE, BACKBONE, lfw, lfw_issame)
 buffer_val(writer, "LFW", accuracy_lfw, best_threshold_lfw, roc_curve_lfw, 15)
-print("Evaluation: LFW Acc: {}".format(accuracy_lfw))
+print("LFW - accuracy:{}, threshold:{}".format(accuracy_lfw, best_threshold_lfw))

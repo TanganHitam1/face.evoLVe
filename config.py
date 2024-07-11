@@ -11,8 +11,38 @@ configurations = {
         BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
         HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
 
-        BACKBONE_NAME = 'RetinaFace', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
-        NAME = 'mobilenet0.25',
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'SphereFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 256,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.1, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'SGD', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
+    2: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
         HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
         LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
 
@@ -23,66 +53,58 @@ configurations = {
         BATCH_SIZE = 256,
         DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
         LR = 0.1, # initial LR
-        NUM_EPOCH = 125, # total epoch number (use the firt 1/25 epochs to warm up)
-        # NUM_EPOCH = 15, # total epoch number (use the firt 1/25 epochs to warm up)
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'SGD', # support: ['SGD', 'Adam', 'Adamax']
         WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
         MOMENTUM = 0.9,
-        STAGES = [35, 65, 95], # epoch stages to decay learning rate
-        # STAGES = [8, 7, 14], # epoch stages to decay learning rate
 
         DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
         MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
-        # GPU_ID = [0, 1, 2, 3], # specify your GPU ids
         GPU_ID = [0], # specify your GPU ids
         PIN_MEMORY = True,
-        NUM_WORKERS = 4,
-        IN_CHANNEL = 32,
-        OUT_CHANNEL = 64,
-        RETURN_LAYERS = {'stage1': 1, 'stage2': 2, 'stage3': 3},
-        PRETRAIN = False,
-),
-    2: dict(
-        SEED = 1337, # random seed for reproduce results
-
-        DATA_ROOT = '/home/peter/Project/face.evoLVe.PyTorch/data', # the parent root where your train/val/test data are stored
-        MODEL_ROOT = './model', # the root to buffer your checkpoints
-        LOG_ROOT = './log', # the root to log your train/val status
-        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
-        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
-
-        BACKBONE_NAME = 'IR_SE_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
-        HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
-        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
-
-        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
-        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
-        RGB_STD = [0.5, 0.5, 0.5],
-        EMBEDDING_SIZE = 512, # feature dimension
-        BATCH_SIZE = 512,
-        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
-        LR = 0.1, # initial LR
-        NUM_EPOCH = 125, # total epoch number (use the firt 1/25 epochs to warm up)
-        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
-        MOMENTUM = 0.9,
-        STAGES = [35, 65, 95], # epoch stages to decay learning rate
-
-        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-        MULTI_GPU = True, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
-        GPU_ID = [0, 1, 2, 3], # specify your GPU ids
-        PIN_MEMORY = True,
-        NUM_WORKERS = 8,
-        
-),
+        NUM_WORKERS = 0,
+    ),
     3: dict(
         SEED = 1337, # random seed for reproduce results
 
-        DATA_ROOT = '/home/peter/Project/face.evoLVe.PyTorch/data', # the parent root where your train/val/test data are stored
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
         MODEL_ROOT = './model', # the root to buffer your checkpoints
         LOG_ROOT = './log', # the root to log your train/val status
         BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
         HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
 
-        BACKBONE_NAME = 'IR_SE_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'SphereFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 128,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.001, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'SGD', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
+    4: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
         HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
         LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
 
@@ -90,18 +112,142 @@ configurations = {
         RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
         RGB_STD = [0.5, 0.5, 0.5],
         EMBEDDING_SIZE = 512, # feature dimension
-        BATCH_SIZE = 512,
+        BATCH_SIZE = 128,
         DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
         LR = 0.1, # initial LR
-        NUM_EPOCH = 125, # total epoch number (use the firt 1/25 epochs to warm up)
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'SGD', # support: ['SGD', 'Adam', 'Adamax']
         WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
         MOMENTUM = 0.9,
-        STAGES = [35, 65, 95], # epoch stages to decay learning rate
 
         DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-        MULTI_GPU = True, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
-        GPU_ID = [0, 1, 2, 3], # specify your GPU ids
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
         PIN_MEMORY = True,
         NUM_WORKERS = 0,
-),
+    ),
+    5: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'SphereFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 128,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.1, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'Adam', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
+    6: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 128,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.1, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'Adam', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
+    7: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'SphereFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 128,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.001, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'Adamax', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
+    8: dict(
+        SEED = 1337, # random seed for reproduce results
+
+        DATA_ROOT = './data/Datasets/', # the parent root where your train/val/test data are stored
+        MODEL_ROOT = './model', # the root to buffer your checkpoints
+        LOG_ROOT = './log', # the root to log your train/val status
+        BACKBONE_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+        HEAD_RESUME_ROOT = './', # the root to resume training from a saved checkpoint
+
+        BACKBONE_NAME = 'ResNet_50', # support: ['ResNet_50', 'ResNet_101', 'ResNet_152', 'IR_50', 'IR_101', 'IR_152', 'IR_SE_50', 'IR_SE_101', 'IR_SE_152']
+        HEAD_NAME = 'ArcFace', # support:  ['Softmax', 'ArcFace', 'CosFace', 'SphereFace', 'Am_softmax']
+        LOSS_NAME = 'Focal', # support: ['Focal', 'Softmax']
+
+        INPUT_SIZE = [112, 112], # support: [112, 112] and [224, 224]
+        RGB_MEAN = [0.5, 0.5, 0.5], # for normalize inputs to [-1, 1]
+        RGB_STD = [0.5, 0.5, 0.5],
+        EMBEDDING_SIZE = 512, # feature dimension
+        BATCH_SIZE = 128,
+        DROP_LAST = True, # whether drop the last batch to ensure consistent batch_norm statistics
+        LR = 0.1, # initial LR
+        NUM_EPOCH = 50, # total epoch number (use the firt 1/25 epochs to warm up)
+        OPTIMIZER_NAME = 'SGD', # support: ['SGD', 'Adam', 'Adamax']
+        WEIGHT_DECAY = 5e-4, # do not apply to batch_norm parameters
+        MOMENTUM = 0.9,
+
+        DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        MULTI_GPU = False, # flag to use multiple GPUs; if you choose to train with single GPU, you should first run "export CUDA_VISILE_DEVICES=device_id" to specify the GPU card you want to use
+        GPU_ID = [0], # specify your GPU ids
+        PIN_MEMORY = True,
+        NUM_WORKERS = 0,
+    ),
 }

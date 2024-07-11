@@ -84,6 +84,11 @@ class RetinaFace(nn.Module):
         self.ssh1 = SSH(out_channels, out_channels)
         self.ssh2 = SSH(out_channels, out_channels)
         self.ssh3 = SSH(out_channels, out_channels)
+        # self.flatten = nn.Flatten()
+        # self.dropout = nn.Dropout(0.5)
+        # self.fc = nn.Linear(4096, 512)
+        # self.fc = nn.Linear((64 + 64 + 64) * 4 * 4, 512)
+        # self.fc = nn.Linear(16704, 512)
 
         self.ClassHead = self._make_class_head(fpn_num=3, inchannels=cfg['OUT_CHANNEL'])
         self.BboxHead = self._make_bbox_head(fpn_num=3, inchannels=cfg['OUT_CHANNEL'])
@@ -119,7 +124,7 @@ class RetinaFace(nn.Module):
 
     def forward(self,inputs):
         out = self.body(inputs)
-
+        # feature = self.backbone(inputs)
         # FPN
         fpn = self.fpn(out)
 
@@ -127,6 +132,7 @@ class RetinaFace(nn.Module):
         feature1 = self.ssh1(fpn[0])
         feature2 = self.ssh2(fpn[1])
         feature3 = self.ssh3(fpn[2])
+        # print(feature1.shape, feature2.shape, feature3.shape)
         features = [feature1, feature2, feature3]
 
         bbox_regressions = torch.cat([self.BboxHead[i](feature) for i, feature in enumerate(features)], dim=1)
@@ -137,4 +143,10 @@ class RetinaFace(nn.Module):
             output = (bbox_regressions, classifications, ldm_regressions)
         else:
             output = (bbox_regressions, F.softmax(classifications, dim=-1), ldm_regressions)
+
+         # Flatten and concatenate features
+        # feature = feature3.view(feature3.size(0), -1)
+        # feature = self.dropout(feature)
+        # print(feature.shape)
+        # feature = self.fc(feature)
         return output, feature3
